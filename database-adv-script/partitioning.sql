@@ -1,10 +1,4 @@
--- Implementing Range Partitioning on the Booking table based on start_date
--- Using PostgreSQL syntax for partitioning
-
--- 1. Rename existing table (to migrate data)
-ALTER TABLE Booking RENAME TO Booking_old;
-
--- 2. Create the partitioned table
+-- Step 1: Create the Booking table with Partitioning by Range on start_date
 CREATE TABLE Booking (
     booking_id UUID NOT NULL,
     property_id UUID NOT NULL,
@@ -17,9 +11,15 @@ CREATE TABLE Booking (
     PRIMARY KEY (booking_id, start_date)
 ) PARTITION BY RANGE (start_date);
 
--- 3. Create partitions for specific years
+-- Step 2: Create specific partitions for different timeframes
+CREATE TABLE Booking_2024 PARTITION OF Booking
+    FOR VALUES FROM ('2024-01-01') TO ('2025-01-01');
+
 CREATE TABLE Booking_2025 PARTITION OF Booking
     FOR VALUES FROM ('2025-01-01') TO ('2026-01-01');
 
-CREATE TABLE Booking_2026 PARTITION OF Booking
-    FOR VALUES FROM ('2026-01-01') TO ('2027-01-01');
+-- Step 3: Test a query on the partitioned table
+-- This will now perform 'Partition Pruning', only searching the relevant sub-table
+EXPLAIN ANALYZE
+SELECT * FROM Booking 
+WHERE start_date BETWEEN '2025-01-01' AND '2025-12-31';
